@@ -6,7 +6,9 @@
 #
 # Started: 11/05/2023
 
+# Settings
 boardSize = 3
+indexBasedMoves = False
 
 charToNumDict = {"O": 0, "X": 1}
 numToCharDict = {-1: " ", 0: "O", 1: "X"}
@@ -54,22 +56,40 @@ class TicTacToe:
 			move = move.replace(" ", "")
 			commaIdx = move.find(",")
 			if commaIdx != -1 and commaIdx + 1 < len(move):
-				potentialRowMove = move[commaIdx - 1]
-				if potentialRowMove.isdigit():
-					if int(potentialRowMove) < boardSize:
-						rowMove = int(potentialRowMove)
+				pRowMove = move[commaIdx - 1]
+				if pRowMove.isdigit():
+					pRowMove = int(pRowMove)
+					if indexBasedMoves:
+						if pRowMove < boardSize:
+							rowMove = pRowMove
+					elif pRowMove > 0 and pRowMove <= boardSize:
+						rowMove = pRowMove
 				
-				potentialColMove = move[commaIdx + 1]
-				if potentialColMove.isdigit():
-					if int(potentialColMove) < boardSize:
-						colMove = int(potentialColMove)
+				pColMove = move[commaIdx + 1]
+				if pColMove.isdigit():
+					pColMove = int(pColMove)
+					if indexBasedMoves:
+						if pColMove < boardSize:
+							colMove = pColMove
+					elif pColMove > 0 and pColMove <= boardSize:
+						colMove = pColMove
 		
+		#Validate and execute move
 		if rowMove != -1 and colMove != -1:
-			#Execute move
 			stateChange = charToNumDict[self.currentTurn]
-			if self.gameState[rowMove][colMove] == -1 and stateChange:
+
+			if not indexBasedMoves:
+				rowMove -= 1 # Reduce by one for list indexing
+				colMove -= 1
+
+			if self.gameState[rowMove][colMove] == -1 and stateChange != None:
 				self.gameState[rowMove][colMove] = stateChange
+
+				self.moveHistory.append((self.currentTurn, (rowMove, colMove)))
+				print(self.moveHistory)
 				self.currentTurn = "X" if self.currentTurn == "O" else "O"
+			else:
+				print("Invalid move: space occupied")
 		else:
 			print("Invalid move")
 
@@ -84,7 +104,7 @@ class TicTacToe:
 
 def main():
 	print("TicTacToe CLI\n")
-	print("Input your move in the format 'row, col', '0,0' being the top left corner")
+	print(f"Input your move in the format 'row, col', '{'0,0' if indexBasedMoves else '1,1'}' being the top left corner")
 	currentGame = TicTacToe()
 	currentGame.runGame()
 	
