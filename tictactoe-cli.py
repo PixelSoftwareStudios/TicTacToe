@@ -6,6 +6,10 @@
 #
 # Started: 11/05/2023
 
+# TODO:
+#	Fix play again prompt to actually play again
+#	Add curses to make graphical
+#	
 import os
 
 # Settings
@@ -43,12 +47,12 @@ class TicTacToe:
 		fullDrawnState = "\n┌" + "───┬" * (boardSize - 1) + "───┐"
 		for i, row in enumerate(self.gameState):
 			drawnRow = "\n│"
-			for col in row:
+			for j, col in enumerate(row):
 				piece = numToCharDict[col]
-				if self.winner == piece:
-					drawnRow += f" {BOLD}{numToCharDict[col]}{ENDC} │"
+				if (i, j) in self.winningPlaces:  # Check if this position is part of the winning line
+					drawnRow += f" {BOLD}{piece}{ENDC} │"
 				else:
-					drawnRow += f" {numToCharDict[col]} │"
+					drawnRow += f" {piece} │"
 
 			fullDrawnState += drawnRow
 			if i < boardSize - 1:
@@ -68,31 +72,45 @@ class TicTacToe:
 			return "draw"
 
 		# Check horizontally
-		for row in self.gameState:
-			row = set(row)
+		for row_idx, row in enumerate(self.gameState):
 			if -1 not in row:
 				if len(set(row)) == 1:
-					return row.pop()
+					self.winningPlaces = [(row_idx, i) for i in range(boardSize)]
+					return row[0]
 
 		# Check vertically
-		for i in range(boardSize):
-			col = set([row[i] for row in self.gameState])
+		for col_idx in range(boardSize):
+			col = [row[col_idx] for row in self.gameState]
 			if -1 not in col:
-				if len(col) == 1:
-					return col.pop()
+				if len(set(col)) == 1:
+					self.winningPlaces = [(i, col_idx) for i in range(boardSize)]
+					return col[0]
 		
 		# Check left-right diagonal
-		leftright = set([self.gameState[i][i] for i in range(boardSize)])
+		leftright = [self.gameState[i][i] for i in range(boardSize)]
 		if -1 not in leftright:
-			if len(leftright) == 1:
-				return self.gameState[0][0]
+			if len(set(leftright)) == 1:
+				self.winningPlaces = [(i, i) for i in range(boardSize)]
+				return leftright[0]
 
 		# Check right-left diagonal
-		rightleft = set([self.gameState[i][boardSize - 1 - i] for i in range(boardSize)])
+		rightleft = [self.gameState[i][boardSize - 1 - i] for i in range(boardSize)]
 		if -1 not in rightleft:
-			if len(rightleft) == 1:
-				return self.gameState[0][boardSize - 1]
+			if len(set(rightleft)) == 1:
+				self.winningPlaces = [(i, boardSize - 1 - i) for i in range(boardSize)]
+				return rightleft[0]
 
+		return -1
+	
+	def validateMove(self, move):
+		if move.isdigit():
+			move = int(move)
+			if indexBasedMoves:
+				if move < boardSize:
+					return move
+			elif move > 0 and move <= boardSize:
+				return move
+		
 		return -1
 
 	def makeMove(self, move):
@@ -104,24 +122,8 @@ class TicTacToe:
 			move = move.replace(" ", "")
 			commaIdx = move.find(",")
 			if commaIdx != -1 and commaIdx + 1 < len(move):
-				# p means potential, this is so I only need to print invalid move once
-				pRowMove = move[commaIdx - 1]
-				if pRowMove.isdigit():
-					pRowMove = int(pRowMove)
-					if indexBasedMoves:
-						if pRowMove < boardSize:
-							rowMove = pRowMove
-					elif pRowMove > 0 and pRowMove <= boardSize:
-						rowMove = pRowMove
-				
-				pColMove = move[commaIdx + 1]
-				if pColMove.isdigit():
-					pColMove = int(pColMove)
-					if indexBasedMoves:
-						if pColMove < boardSize:
-							colMove = pColMove
-					elif pColMove > 0 and pColMove <= boardSize:
-						colMove = pColMove
+				rowMove = self.validateMove(move[commaIdx - 1])
+				colMove = self.validateMove(move[commaIdx + 1])
 		
 		#Validate and execute move
 		if rowMove != -1 and colMove != -1:
@@ -165,6 +167,7 @@ class TicTacToe:
 				again = again.lower()
 				if again == "y" or again == "yes":
 					self.newGame()
+					break
 
 			else:
 				print("Current Turn: " + self.currentTurn)
@@ -172,7 +175,7 @@ class TicTacToe:
 				self.makeMove(move)
 		
 def main():
-	# To make cmd formatting work on windows
+	# To make CLI text styling work on windows
 	if os.name == 'nt':
 		os.system("color")
 
