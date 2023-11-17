@@ -7,7 +7,6 @@
 # Started: 11/05/2023
 
 # TODO:
-#	Fix play again prompt to actually play again
 #	Add curses to make graphical
 #	
 import os
@@ -144,35 +143,35 @@ class TicTacToe:
 			print("Invalid move")
 
 	def runGame(self):
-		while not self.playerHasWon:
-			check = self.checkWinner()
-			if check != -1:
-				# feel like I could do this part better
-				if check != "draw":
-					self.winner = numToCharDict[check]
+		while True:  
+			self.newGame()
+
+			while not self.playerHasWon:
+				check = self.checkWinner()
+				if check != -1:
+					if check != "draw":
+						self.winner = numToCharDict[check]
+					else:
+						self.winner = "draw"
+
+					self.playerHasWon = True
+
+				self.drawGameState()
+
+				if self.playerHasWon:
+					if self.winner == "draw":
+						print("You went to a draw, what a surprise")
+					else:
+						print(self.winner + " wins!")
+					
+					again = input("\nWould you like to play again (y/n): ").lower()
+					if again not in ["y", "yes"]:
+						break
+
 				else:
-					self.winner = "draw"
-
-				self.playerHasWon = True
-
-			self.drawGameState()
-
-			if self.playerHasWon:
-				if self.winner == "draw":
-					print("You went to a draw, what a surprise")
-				else:
-					print(self.winner + " wins!")
-				
-				again = input("\nWould you like to play again (y/n): ")
-				again = again.lower()
-				if again == "y" or again == "yes":
-					self.newGame()
-					break
-
-			else:
-				print("Current Turn: " + self.currentTurn)
-				move = input("\nYour Move: ")
-				self.makeMove(move)
+					print("Current Turn: " + self.currentTurn)
+					move = input("\nYour Move: ")
+					self.makeMove(move)
 		
 def main():
 	# To make CLI text styling work on windows
